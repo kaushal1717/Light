@@ -147,12 +147,14 @@ where
     if matches!(adapter, CliAdapter::Codex) {
         cmd.arg("exec");
     }
-    cmd.arg(task);
     if let Some(m) = model {
         if matches!(adapter, CliAdapter::Claude) {
             cmd.args(["--model", m]);
         }
     }
+    // `--` ends option parsing, so a prompt starting with `-` (a plan's `---` front matter) is
+    // the prompt, not an "unknown option". Every flag must come before it (hence `--model` above).
+    cmd.arg("--").arg(task);
     let launched = cmd
         .current_dir(worktree)
         .stdin(Stdio::null())

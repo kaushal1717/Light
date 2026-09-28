@@ -3,6 +3,34 @@
 Release convention: every push to `main` requires a matching versioned note under
 `docs/releases/` and an entry in this file. See [CONTRIBUTING.md](CONTRIBUTING.md).
 
+## [0.1.3] - 2026-09-28
+
+### Fixed
+
+- `fleet swarm --agent claude` can finish a lane. Before this, every claude lane failed:
+  - **Not logged in:** the hermetic env swaps `HOME` and drops `USER`. Fleet now forwards the
+    parent's `CLAUDE_CODE_OAUTH_TOKEN` (from `claude setup-token`) to claude lanes only. The
+    real `HOME` and `USER` are still never forwarded.
+  - **A `---` prompt was an "unknown option":** the prompt is now passed to `claude`/`codex`
+    after `--`.
+  - **Every write was denied:** swarm workers now run with `--permission-mode acceptEdits`, not
+    claude's ask-first default, which has no one to ask in `-p` mode.
+
+### Verification
+
+- Local only (macOS arm64, rustc 1.98.1, claude 2.1.280); no CI.
+- 7 new tests (4 real-binary, 3 unit). Each regression test fails without its fix.
+- `cargo test --workspace`: 855 passed, 17 failed; the same 17 fail on untouched `main`.
+- Real `fleet swarm --agent claude --prompt-file <.md with front matter> --merge`: exit 0,
+  `claude-sonnet-5` created the requested file and fleet merged it.
+
+### Known limitation
+
+- A claude worker can read its own environment, and so the forwarded token. That trade-off is
+  for the repo owner to approve, and forwarding stops as soon as the variable is unset.
+- The codex `--` change is unverified live. `acceptEdits` also auto-approves simple file
+  commands (observed with `touch`).
+
 ## [0.1.2] - 2026-09-28
 
 ### Added

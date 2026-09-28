@@ -7,7 +7,8 @@ use std::env;
 use std::path::{Path, PathBuf};
 
 /// The env vars a hermetically-spawned child process is allowed to see. Built by `env_clear()`
-/// + this exact allowlist -- nothing else crosses the boundary.
+/// + this exact allowlist -- nothing else crosses the boundary, except the claude-lane-only
+/// login token `claude_credential::forward` adds after `apply` (see that module).
 #[derive(Clone, Debug)]
 pub struct HermeticEnv {
     pub home: PathBuf,

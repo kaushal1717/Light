@@ -28,5 +28,7 @@ pub fn build(
         .stdout(Stdio::null())
         .stderr(Stdio::null());
     hermetic.apply(&mut command);
+    // After `apply`'s `env_clear()`: the one credential a claude lane may carry.
+    super::super::sandbox::claude_credential::forward(request.adapter, &mut command);
     Ok(command)
 }

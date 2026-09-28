@@ -58,3 +58,12 @@ fn read_only_policy_never_names_bash_in_either_tools_flag() {
     let args = args(AgentToolPolicy::approved(false, false));
     assert_eq!(tools_arg(&args), "Read,Glob,Grep");
 }
+
+/// Regression: a `swarm` worker (`worker_default`) passed claude no permission mode, and under
+/// the hermetic `HOME` (no user settings) `-p` denied every write -- the lane ended "worker
+/// reported done but left the worktree unchanged". Verified live before this fix.
+#[test]
+fn worker_default_accepts_edits_without_bypassing_permissions() {
+    let args = args(AgentToolPolicy::worker_default());
+    assert_eq!(args, ["--permission-mode", "acceptEdits"]);
+}

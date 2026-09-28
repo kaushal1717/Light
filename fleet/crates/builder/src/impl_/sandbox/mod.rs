@@ -2,6 +2,7 @@
 //! the repo's committed `.fleet/` tree, and build the per-lane `HOME`/`XDG_*` env.
 
 pub mod agent_registry;
+pub mod claude_credential;
 mod config_source;
 pub mod hermetic_env;
 pub mod manifest;

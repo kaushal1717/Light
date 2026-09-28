@@ -43,6 +43,10 @@ impl AgentToolPolicy {
 
     pub fn configure_claude(self, command: &mut Command) {
         if !self.restricted {
+            // The hermetic `HOME` has no user settings, so claude's default mode asks before
+            // every write -- and `-p` has no one to ask: the worker "finished" with no change.
+            // `acceptEdits` approves edits in the lane's worktree (its cwd), nothing broader.
+            command.args(["--permission-mode", "acceptEdits"]);
             return;
         }
         let tools = match (self.write, self.command) {
