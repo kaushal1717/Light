@@ -28,7 +28,16 @@ pub(super) fn prepare(repo: &std::path::Path, role_name: &str) -> Result<Prepare
         let _ = merge::remove(repo, &worktree);
         return Err(SpawnError::SandboxProvisionFailed(err.to_string()));
     }
-    let sandbox_root = worktree.path.join(".fleet-sandbox");
+    // Absolute: a relative `--repo .` makes `worktree.path` relative, and the lane's CLI runs
+    // with the worktree as cwd, so a relative `HOME` landed one level deeper -- outside the
+    // `.fleet-sandbox/` cleanup, where `merge_lane`'s `git add -A` committed it.
+    let sandbox_root = match std::path::absolute(worktree.path.join(".fleet-sandbox")) {
+        Ok(path) => path,
+        Err(err) => {
+            let _ = merge::remove(repo, &worktree);
+            return Err(SpawnError::SandboxProvisionFailed(err.to_string()));
+        }
+    };
     let hermetic = hermetic_env::build(&sandbox_root);
     Ok(Prepared {
         worktree,

@@ -15,12 +15,15 @@ Release convention: every push to `main` requires a matching versioned note unde
     after `--`.
   - **Every write was denied:** swarm workers now run with `--permission-mode acceptEdits`, not
     claude's ask-first default, which has no one to ask in `-p` mode.
+  - **The lane's private `HOME` was committed** (session transcript and config) when run with
+    `--repo .`. The sandbox path is now absolute, and `merge_lane` never stages
+    `.fleet-sandbox/` at any depth.
 
 ### Verification
 
 - Local only (macOS arm64, rustc 1.98.1, claude 2.1.280); no CI.
-- 7 new tests (4 real-binary, 3 unit). Each regression test fails without its fix.
-- `cargo test --workspace`: 855 passed, 17 failed; the same 17 fail on untouched `main`.
+- 9 new tests (5 real-binary, 1 merge integration, 3 unit). Each regression test fails without its fix.
+- `cargo test --workspace`: 857 passed, 17 failed; the same 17 fail on untouched `main`.
 - Real `fleet swarm --agent claude --prompt-file <.md with front matter> --merge`: exit 0,
   `claude-sonnet-5` created the requested file and fleet merged it.
 

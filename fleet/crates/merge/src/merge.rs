@@ -18,7 +18,10 @@ pub fn merge_lane(
     if !worktree_dir.is_dir() {
         return Err(MergeRefusal::NoWorktree(worktree_dir.to_path_buf()));
     }
-    let add = run_git(worktree_dir, &["add", "-A", ":!*.pyc", ":!*/target/*"])
+    // `.fleet-sandbox/` at ANY depth is a lane's private `HOME` (CLI session transcripts,
+    // config) and must never be committed, even if a path bug puts it somewhere unexpected.
+    let exclude = [":!*.pyc", ":!*/target/*", ":!*.fleet-sandbox/*"];
+    let add = run_git(worktree_dir, &[&["add", "-A"][..], &exclude[..]].concat())
         .map_err(MergeRefusal::Spawn)?;
     if !add.status.success() {
         return Err(MergeRefusal::StageFailed(worktree_dir.to_path_buf()));
