@@ -12,7 +12,9 @@ pub struct AgentArgs {
     pub kind: String,
     /// The worktree the child is expected to do its work in.
     pub worktree: PathBuf,
-    /// Free-text task prompt.
+    /// Free-text task prompt. `allow_hyphen_values`: a prompt is text, and one starting with
+    /// `-` (e.g. a plan file's `---` front matter) is still the prompt, not a flag.
+    #[arg(allow_hyphen_values = true)]
     pub task: String,
     /// Optional requested model, only meaningful for `claude`/`codex`.
     pub model: Option<String>,

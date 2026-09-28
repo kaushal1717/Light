@@ -11,6 +11,11 @@ Release convention: every push to `main` requires a matching versioned note unde
   `.pdf` file instead of an inline `--prompt`. PDF text is extracted in-process
   (`pdf-extract`), with no external tool required.
 
+### Fixed
+
+- A prompt starting with `-` (e.g. a plan's `---` front matter) no longer kills the `__agent`
+  child with a clap usage error. Before, the lane ended "agent exited without an fd-3 result".
+
 ### Changed
 
 - An unsupported, missing, empty, non-UTF-8, textless, malformed, or oversized prompt file is
@@ -20,8 +25,8 @@ Release convention: every push to `main` requires a matching versioned note unde
 ### Verification
 
 - Local only (macOS arm64, rustc 1.98.1); no CI.
-- New tests: 6 unit + 3 real-binary, all pass; the 8 existing swarm unit tests still pass.
-- `cargo test --workspace`: 846 passed, 17 failed; the same 17 fail on untouched `main`.
+- New tests: 6 unit + 5 real-binary, all pass; the 8 existing swarm unit tests still pass.
+- `cargo test --workspace`: 848 passed, 17 failed; the same 17 fail on untouched `main`.
 - `cargo clippy -D warnings` fails on untouched `crates/plan` with clippy 1.98; 0 warnings in
   changed files.
 - Real `fleet swarm --agent freelane --prompt-file <pdf> --merge` built the file the PDF
