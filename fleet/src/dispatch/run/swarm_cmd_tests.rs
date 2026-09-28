@@ -22,6 +22,7 @@ fn threads_resolved_state_dir_to_worker_even_when_env_var_was_unset() {
         task: "irrelevant".into(),
         role: "".into(), // invalid -> Role::parse fails, right after the env var is set
         prompt: String::new(),
+        prompt_file: None,
         merge: false,
         then_verify: false,
         agent: "freelane".into(),
@@ -117,6 +118,7 @@ fn then_verify_with_refused_lane_returns_swarm_refusal() {
         task: "irrelevant".into(),
         role: "".into(), // invalid -> Role::parse fails, before any lane or verify runs
         prompt: String::new(),
+        prompt_file: None,
         merge: false,
         then_verify: true, // must NOT chain verify on a Refusal
         agent: "freelane".into(),
@@ -143,6 +145,7 @@ fn unknown_agent_flag_is_refused_not_silently_defaulted() {
         task: "some-task".into(),
         role: "builder".into(), // valid role, see fleet_types::Role::ALL
         prompt: String::new(),
+        prompt_file: None,
         merge: false,
         then_verify: false,
         agent: "bogus".into(),

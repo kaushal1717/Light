@@ -84,6 +84,8 @@ fleet doctor          # is this machine set up correctly, in plain terms
 fleet route --role builder --json   # which installed agent would take this job, and why
 fleet run --repo .    # run the real pipeline above against a repo
 fleet gate --id <id>  # run one gate by name and get its real exit code
+fleet swarm --repo . --task <id> --role builder --agent claude --prompt-file plan.md
+                      # have a worker build from a .txt/.md/.pdf instruction file
 ```
 
 Run `fleet help` for the full command list with examples, and `fleet completions zsh` (or `bash`,

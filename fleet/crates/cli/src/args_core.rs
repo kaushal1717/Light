@@ -34,8 +34,8 @@ pub struct RouteArgs {
 pub struct SwarmArgs {
     #[arg(long)]
     pub repo: String,
-    /// The lane's task id, and (unless `--prompt` is also given) the free-text instructions
-    /// sent to the worker. Passing `--task` alone is enough to run a lane.
+    /// The lane's task id, and (unless `--prompt`/`--prompt-file` is given) the free-text
+    /// instructions sent to the worker. Passing `--task` alone is enough to run a lane.
     #[arg(long)]
     pub task: String,
     #[arg(long)]
@@ -44,6 +44,11 @@ pub struct SwarmArgs {
     /// only (the task id stays `--task`'s value either way). Defaults to `--task`'s value.
     #[arg(long, default_value = "")]
     pub prompt: String,
+    /// Optional: read the worker instructions from a `.txt`, `.md`, or `.pdf` file instead of
+    /// passing them inline. Mutually exclusive with `--prompt`; an unsupported extension, an
+    /// unreadable file, or one with no text is refused (exit 7), never replaced by `--task`.
+    #[arg(long, value_name = "PATH", conflicts_with = "prompt")]
+    pub prompt_file: Option<String>,
     /// Opt in to merging the lane's worktree branch back into this repo's `HEAD` if (and only
     /// if) it finishes `Done`. Off by default -- a `Refused` or `EnvironmentFault` lane is never
     /// merged. This WRITES to the target branch given by `--repo`; only pass it when you mean

@@ -1,6 +1,6 @@
 [package]
 name = "fleet-cli"
-version = "0.1.1"
+version = "0.1.2"
 edition = "2021"
 license.workspace = true
 
@@ -37,6 +37,7 @@ cli      = { path = "../crates/cli" }
 runtime  = { path = "../crates/runtime" }
 print    = { path = "../crates/print" }
 ingest  = { path = "../crates/ingest" }
+pdf-extract = "0.12"
 
 [features]
 # Passthrough to `review`'s own `llm7` feature (real keyless HTTP adapter). OFF by

@@ -74,11 +74,13 @@ pub fn swarm(state_dir: &Path, args: SwarmArgs) -> Result<(), DispatchError> {
     // instructions sent to the worker (`SpawnRequest::task`) -- this used to be wired to
     // `args.prompt` alone, so a non-empty `--task` with no `--prompt` was rejected as an empty
     // prompt (S1-4). `--prompt` remains a genuinely distinct, optional override: pass it to
-    // give the worker different instructions than the task id/name itself.
-    let prompt = if args.prompt.trim().is_empty() {
-        args.task.clone()
-    } else {
-        args.prompt
+    // give the worker different instructions than the task id/name itself. `--prompt-file`
+    // (clap-exclusive with `--prompt`) reads them from disk; a file that yields no usable text
+    // is refused, never silently replaced by `--task`'s text.
+    let prompt = match &args.prompt_file {
+        Some(path) => crate::dispatch::swarm_prompt_file::read(Path::new(path))?,
+        None if args.prompt.trim().is_empty() => args.task.clone(),
+        None => args.prompt,
     };
     // `--agent` selects the CLI adapter; unknown values fail here as EnvironmentFault rather
     // than silently defaulting to Freelane (the prior behavior -- Claude/Codex existed in the

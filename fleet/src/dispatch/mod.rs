@@ -68,6 +68,8 @@ mod sow_probes;
 pub mod spawn_probe_cmd;
 #[path = "run/swarm_cmd.rs"]
 pub mod swarm_cmd;
+#[path = "run/swarm_prompt_file.rs"]
+mod swarm_prompt_file;
 #[path = "ops/tool_path.rs"]
 pub(crate) mod tool_path;
 #[path = "verify/verify_cmd.rs"]
