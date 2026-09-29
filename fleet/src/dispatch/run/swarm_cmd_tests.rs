@@ -5,6 +5,7 @@
 //! network. Serialized against other tests in this module via a process-wide mutex: env vars are
 //! process-global and `cargo test` runs unit tests in one process by default.
 use super::*;
+use builder::CliAdapter;
 use cli::args_core::SwarmArgs;
 use std::path::PathBuf;
 use std::sync::Mutex;

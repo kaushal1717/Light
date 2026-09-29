@@ -8,8 +8,10 @@ Release convention: every push to `main` requires a matching versioned note unde
 ### Added
 
 - `fleet swarm --prompt-file <PATH>` reads the worker instructions from a `.txt`, `.md`, or
-  `.pdf` file instead of an inline `--prompt`. PDF text is extracted in-process
-  (`pdf-extract`), with no external tool required.
+  `.pdf` file instead of an inline `--prompt`. PDF text is extracted by `pdf-extract` in an
+  isolated `fleet __pdf-text` child with a 256 MiB heap cap and a 30 s deadline, so a PDF that
+  inflates to gigabytes is refused (exit 7) instead of exhausting the CLI's memory. No external
+  tool is required.
 
 ### Fixed
 
@@ -21,12 +23,17 @@ Release convention: every push to `main` requires a matching versioned note unde
 - An unsupported, missing, empty, non-UTF-8, textless, malformed, or oversized prompt file is
   refused with exit 7 naming the path. It is never silently replaced by `--task`'s text.
   `--prompt-file` and `--prompt` together are a usage error.
+- Every pre-lane `swarm` failure (`--prompt-file`, `--role`, `--task`, `--agent`, `--repo`)
+  now writes a `Refusal` ledger receipt with the process's exit code before exiting
+  (AGENTS.md rule 8). Before, none of them wrote one.
 
 ### Verification
 
 - Local only (macOS arm64, rustc 1.98.1); no CI.
-- New tests: 6 unit + 5 real-binary, all pass; the 8 existing swarm unit tests still pass.
-- `cargo test --workspace`: 848 passed, 17 failed; the same 17 fail on untouched `main`.
+- New tests: 6 unit + 7 real-binary, all pass; the 8 existing swarm unit tests still pass.
+- `cargo test --workspace`: 850 passed, 17 failed; the same 17 fail without this change.
+- A 6.8 MB PDF that inflates to 1 GiB: before, the CLI peaked at 1.62 GB RSS over 7.3 s and
+  wrote no receipt; after, it is refused in 0.36 s (peak 245 MB, in the child) with a receipt.
 - `cargo clippy -D warnings` fails on untouched `crates/plan` with clippy 1.98; 0 warnings in
   changed files.
 - Real `fleet swarm --agent freelane --prompt-file <pdf> --merge` built the file the PDF
@@ -34,8 +41,7 @@ Release convention: every push to `main` requires a matching versioned note unde
 
 ### Known limitation
 
-- Swarm's argument-validation refusals, including this flag's, still exit 7 without a ledger
-  receipt (AGENTS.md rule 8), as the existing `--role`/`--task` refusals already do.
+- The heap cap and deadline are constants, not configuration.
 - Scanned PDFs are refused, not OCR'd; multi-column PDFs may extract out of reading order.
 
 ## [0.1.1] - 2026-09-15

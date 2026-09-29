@@ -76,6 +76,9 @@ pub enum Commands {
     /// Hidden, test-only: drives `builder::spawn`/`join`'s real parent path end to end.
     #[command(name = "__spawn_probe", hide = true)]
     SpawnProbe(SpawnProbeArgs),
+    /// Hidden, real: the heap-capped child `swarm --prompt-file` parses a PDF in (stdin -> text).
+    #[command(name = "__pdf-text", hide = true)]
+    PdfText,
     /// Hidden: capacity reading + preflight verdict, no spawn (dispatch/capacity_probe_cmd.rs).
     #[command(name = "__capacity_probe", hide = true)]
     CapacityProbe,

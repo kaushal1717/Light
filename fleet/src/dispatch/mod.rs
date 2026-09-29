@@ -64,12 +64,22 @@ mod run_modules_cmd;
 mod run_report;
 #[path = "run/sow_probes.rs"]
 mod sow_probes;
+#[path = "run/pdf_text_cmd.rs"]
+mod pdf_text_cmd;
 #[path = "run/spawn_probe_cmd.rs"]
 pub mod spawn_probe_cmd;
 #[path = "run/swarm_cmd.rs"]
 pub mod swarm_cmd;
+#[path = "run/swarm_intake.rs"]
+mod swarm_intake;
+#[path = "run/swarm_intake_receipt.rs"]
+mod swarm_intake_receipt;
 #[path = "run/swarm_prompt_file.rs"]
 mod swarm_prompt_file;
+#[path = "run/swarm_prompt_pdf.rs"]
+mod swarm_prompt_pdf;
+#[path = "run/swarm_prompt_pdf_verdict.rs"]
+mod swarm_prompt_pdf_verdict;
 #[path = "ops/tool_path.rs"]
 pub(crate) mod tool_path;
 #[path = "verify/verify_cmd.rs"]
@@ -141,6 +151,7 @@ pub async fn run(
         Commands::PlanAheadProbe(a) => planahead_cmd::probe(state_dir, a),
         Commands::Agent(a) => agent_cmd::agent(a).map_err(DispatchError::from),
         Commands::SpawnProbe(a) => spawn_probe_cmd::probe(a),
+        Commands::PdfText => pdf_text_cmd::run(),
         Commands::CapacityProbe => capacity_probe_cmd::report(3, None),
         Commands::Adjudicate(a) => adjudicate_cmd::adjudicate(a.artifact, a.json),
         Commands::Pr(a) => pr_cmd::pr_emit(a),

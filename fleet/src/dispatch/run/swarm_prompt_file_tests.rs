@@ -1,5 +1,10 @@
+//! `read` for text files, and the `__pdf-text` child's `extract` in-process for PDFs: `read`
+//! sends a PDF to `current_exe() __pdf-text`, and here `current_exe()` is the test harness, not
+//! `fleet`. The real child, its heap cap, and its receipts are driven through the real binary
+//! in `src/tests/swarm_prompt_file/`.
 use super::{read, MAX_PROMPT_BYTES};
 use crate::dispatch::error::DispatchError;
+use crate::dispatch::pdf_text_cmd::extract;
 use std::path::PathBuf;
 
 #[path = "swarm_prompt_file_fixture.rs"]
@@ -29,9 +34,8 @@ fn txt_and_md_are_passed_through_verbatim() {
 
 #[test]
 fn pdf_text_layer_becomes_the_prompt() {
-    let dir = tempfile::tempdir().unwrap();
     let pdf = fixture::one_page_pdf("Build the STN dispatch cron");
-    let text = read(&write(&dir, "plan.pdf", &pdf)).unwrap();
+    let text = extract(&pdf).unwrap();
     assert!(text.contains("Build the STN dispatch cron"), "got {text:?}");
 }
 
@@ -53,12 +57,14 @@ fn missing_empty_and_non_utf8_files_are_refused_not_defaulted() {
 }
 
 #[test]
-fn malformed_and_textless_pdfs_are_refused_not_panicked() {
-    let dir = tempfile::tempdir().unwrap();
-    let garbage = refusal(&write(&dir, "junk.pdf", b"%PDF-1.4 not really a pdf"));
+fn malformed_pdfs_are_refused_not_panicked() {
+    let garbage = extract(b"%PDF-1.4 not really a pdf").unwrap_err();
     assert!(garbage.contains("could not read PDF text"), "{garbage}");
-    let blank = refusal(&write(&dir, "blank.pdf", &fixture::one_page_pdf("")));
-    assert!(blank.contains("no extractable text"), "{blank}");
+    // A text-layer-free PDF extracts to whitespace; `read` refuses that (real-binary test).
+    assert!(extract(&fixture::one_page_pdf(""))
+        .unwrap()
+        .trim()
+        .is_empty());
 }
 
 #[test]

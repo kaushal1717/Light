@@ -3,14 +3,13 @@
 //! `SpawnRequest` from CLI args and reports the outcome (BLUEPRINT §2 non-goals).
 
 use crate::dispatch::error::DispatchError;
-use builder::{CliAdapter, LaneOutcome, MergePolicy, SpawnRequest, join, spawn};
+use builder::{LaneOutcome, MergePolicy, SpawnRequest, join, spawn};
 use cli::args_core::SwarmArgs;
 use print::human_stream::emit;
 use print::render_event::Event;
 use print::style::Style;
 use std::path::Path;
 use std::time::Duration;
-use types::{Role, TaskId};
 
 /// Env var name `fleet-worker::spawn::worker_state_dir::resolve` reads. Kept as a literal, not a
 /// shared const, since crossing the crate boundary for one string would cost more than it saves;
@@ -63,34 +62,9 @@ pub fn swarm(state_dir: &Path, args: SwarmArgs) -> Result<(), DispatchError> {
     // already threaded through as `state_dir`, makes the worker's independent env read agree
     // with the CLI's resolution by construction instead of by coincidence.
     std::env::set_var(ENV_STATE_DIR, state_dir);
-    // Cheap, offline validation first -- fail fast before ever touching the filesystem
-    // (`ensure_repo` below, which walks `--repo`) or the network. An invalid `--role`/`--agent`
-    // must refuse the same way regardless of whether `--repo` happens to exist (see the
-    // ordering-sensitive regression tests in swarm_cmd_tests.rs).
-    let role = Role::parse(&args.role).map_err(|e| DispatchError::Refusal(e.to_string()))?;
-    let task_id =
-        TaskId::parse(args.task.clone()).map_err(|e| DispatchError::Refusal(e.to_string()))?;
-    // `--task` is both the lane's task id and, unless `--prompt` overrides it, the free-text
-    // instructions sent to the worker (`SpawnRequest::task`) -- this used to be wired to
-    // `args.prompt` alone, so a non-empty `--task` with no `--prompt` was rejected as an empty
-    // prompt (S1-4). `--prompt` remains a genuinely distinct, optional override: pass it to
-    // give the worker different instructions than the task id/name itself. `--prompt-file`
-    // (clap-exclusive with `--prompt`) reads them from disk; a file that yields no usable text
-    // is refused, never silently replaced by `--task`'s text.
-    let prompt = match &args.prompt_file {
-        Some(path) => crate::dispatch::swarm_prompt_file::read(Path::new(path))?,
-        None if args.prompt.trim().is_empty() => args.task.clone(),
-        None => args.prompt,
-    };
-    // `--agent` selects the CLI adapter; unknown values fail here as EnvironmentFault rather
-    // than silently defaulting to Freelane (the prior behavior -- Claude/Codex existed in the
-    // type system but were unreachable from CLI). `from_agent_kind` is the single parse point.
-    let adapter = CliAdapter::from_agent_kind(&args.agent)
-        .map_err(|e| DispatchError::EnvFault(format!("--agent {:?}: {e}", args.agent)))?;
-    // Intake: refuse a `--repo` that isn't a git worktree up front, with an actionable
-    // message -- the lane's worktree/checkout/merge stages all assume it, and fail opaquely
-    // deep inside `builder` otherwise. Same helper `run`/`oracle`/`gate` already use.
-    let repo = super::verify_repo::ensure_repo(&args.repo)?;
+    // Every pre-lane check (role, task, prompt, agent, repo) lives in `swarm_intake`, which
+    // writes a `Refusal` receipt for any failure before this returns (AGENTS.md rule 8).
+    let intake = super::swarm_intake::resolve(state_dir, &args)?;
     // Snapshot `repo`/`task` before `args` is partially moved into `SpawnRequest`: `--then-verify`
     // needs the same two strings after the lane joins to hand the verify pipeline the same
     // targets (never a mutated or re-parsed variant -- the "one command instead of two" promise
@@ -99,12 +73,12 @@ pub fn swarm(state_dir: &Path, args: SwarmArgs) -> Result<(), DispatchError> {
     let verify_repo = args.repo.clone();
     let verify_task = args.task.clone();
     let request = SpawnRequest {
-        repo,
-        role,
-        task_id,
-        adapter,
+        repo: intake.repo,
+        role: intake.role,
+        task_id: intake.task_id,
+        adapter: intake.adapter,
         requested_model: None,
-        task: prompt,
+        task: intake.prompt,
         deadline: Duration::from_secs(300),
     };
     let adapter_kind = request.adapter.agent_kind();
